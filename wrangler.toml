@@ -1,0 +1,10 @@
+# Static site — override OpenNext auto-detect
+[build]
+command = "npx next build"
+
+[build.environment]
+NEXT_PRIVATE_STANDALONE = "false"
+
+# Deploy static output only
+[site]
+bucket = "./out"
