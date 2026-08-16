@@ -226,14 +226,6 @@ export default function StakePanel({ apr }: { apr: string }) {
         <span className="px-heading text-[#ffbe39] text-[13px]">{apr}</span>
       </div>
 
-      {/* fees info */}
-      <div className="flex items-center justify-between mt-2">
-        <span className="px-heading text-white/80 text-[11px]">Fees</span>
-        <span className="px-heading text-[#c9b8d8] text-[11px]">
-          {STAKE_FEE_USDC} USDC stake / {UNSTAKE_FEE_USDC} USDC unstake
-        </span>
-      </div>
-
       {/* actions */}
       <div className="grid gap-3 sm:grid-cols-3 mt-6">
         <button
@@ -269,10 +261,8 @@ export default function StakePanel({ apr }: { apr: string }) {
       )}
 
       <p className="text-[#c9b8d8] text-center text-sm mt-6">
-        Deposit your STONKS into the vault to start earning. A small fee
-        applies per action: {STAKE_FEE_USDC} USDC to stake, {UNSTAKE_FEE_USDC}{" "}
-        USDC to unstake. Rewards are distributed manually by the team every
-        period.
+        Deposit your STONKS into the vault to start earning. Rewards are
+        distributed manually by the team every period.
       </p>
 
       {/* ---- REWARD CARD MODAL ---- */}
