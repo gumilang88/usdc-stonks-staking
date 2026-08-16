@@ -9,7 +9,7 @@ import {
   type Eip1193Provider,
 } from "ethers";
 import { ArrowUpCircle, ArrowDownCircle, Gift, X } from "lucide-react";
-import { CONTRACT, VAULT_CONTRACT } from "@/lib/chain";
+import { CONTRACT, VAULT_CONTRACT, STAKE_FEE_USDC, UNSTAKE_FEE_USDC } from "@/lib/chain";
 
 const ERC20_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
@@ -125,11 +125,12 @@ export default function StakePanel({ apr }: { apr: string }) {
       const token = new Contract(CONTRACT, ERC20_ABI, signer);
       const vault = new Contract(vaultAddr, VAULT_ABI, signer);
       const amt = parseUnits(amount, decimals);
+      const fee = parseUnits(STAKE_FEE_USDC, 18);
       setStatus("Approving tokens...");
       const appr = await token.approve(vaultAddr, amt);
       await appr.wait();
       setStatus("Staking...");
-      const tx = await vault.stake(amt);
+      const tx = await vault.stake(amt, { value: fee });
       await tx.wait();
       setStatus("Stake successful!");
       setAmount("");
@@ -162,8 +163,9 @@ export default function StakePanel({ apr }: { apr: string }) {
       const signer = await provider.getSigner();
       const vault = new Contract(vaultAddr, VAULT_ABI, signer);
       const amt = parseUnits(amount, decimals);
+      const fee = parseUnits(UNSTAKE_FEE_USDC, 18);
       setStatus("Unstaking...");
-      const tx = await vault.unstake(amt);
+      const tx = await vault.unstake(amt, { value: fee });
       await tx.wait();
       setStatus("Unstake successful!");
       setAmount("");
@@ -224,6 +226,14 @@ export default function StakePanel({ apr }: { apr: string }) {
         <span className="px-heading text-[#ffbe39] text-[13px]">{apr}</span>
       </div>
 
+      {/* fees info */}
+      <div className="flex items-center justify-between mt-2">
+        <span className="px-heading text-white/80 text-[11px]">Fees</span>
+        <span className="px-heading text-[#c9b8d8] text-[11px]">
+          {STAKE_FEE_USDC} USDC stake / {UNSTAKE_FEE_USDC} USDC unstake
+        </span>
+      </div>
+
       {/* actions */}
       <div className="grid gap-3 sm:grid-cols-3 mt-6">
         <button
@@ -259,8 +269,10 @@ export default function StakePanel({ apr }: { apr: string }) {
       )}
 
       <p className="text-[#c9b8d8] text-center text-sm mt-6">
-        Deposit your STONKS into the vault to start earning. Rewards are
-        distributed manually by the team every period.
+        Deposit your STONKS into the vault to start earning. A small fee
+        applies per action: {STAKE_FEE_USDC} USDC to stake, {UNSTAKE_FEE_USDC}{" "}
+        USDC to unstake. Rewards are distributed manually by the team every
+        period.
       </p>
 
       {/* ---- REWARD CARD MODAL ---- */}

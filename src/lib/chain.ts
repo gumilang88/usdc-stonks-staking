@@ -22,5 +22,9 @@ export const CONTRACT =
 
 // StakeVault contract — stake masuk ke vault, unstake narik balik,
 // reward di-eksekusi manual oleh team (owner kirim langsung ke staker).
+// Fee: stake 0.1 USDC native, unstake 0.05 USDC native.
 export const VAULT_CONTRACT =
-  "0xa289cB8De15461D6ed20fe143DA52868b6375a4d" as string;
+  "0x6415A41a735669b87Df97a9C731f83CE86B0aaC2" as string;
+
+export const STAKE_FEE_USDC = "0.1";
+export const UNSTAKE_FEE_USDC = "0.05";
