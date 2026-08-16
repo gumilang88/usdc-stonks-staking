@@ -20,6 +20,7 @@ export const ARC_RPC_URL =
 export const CONTRACT =
   "0xc5e49382e59f956763580a71e08df3b34e8603a3" as const;
 
-// Wallet tujuan token pas user stake
-export const RECIPIENT_WALLET =
-  "0x7048a22587CfB9669362384af4e3E4AA76C1bC1E" as const;
+// StakeVault contract — stake masuk ke vault, unstake narik balik,
+// reward di-eksekusi manual oleh team (owner kirim langsung ke staker).
+export const VAULT_CONTRACT =
+  "0xa289cB8De15461D6ed20fe143DA52868b6375a4d" as string;

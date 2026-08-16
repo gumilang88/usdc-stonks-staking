@@ -8,14 +8,19 @@ import {
   parseUnits,
   type Eip1193Provider,
 } from "ethers";
-import { ArrowUpCircle, ArrowDownCircle, Coins } from "lucide-react";
-import { CONTRACT, RECIPIENT_WALLET } from "@/lib/chain";
+import { ArrowUpCircle, ArrowDownCircle, Gift, X } from "lucide-react";
+import { CONTRACT, VAULT_CONTRACT } from "@/lib/chain";
 
 const ERC20_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
   "function decimals() view returns (uint8)",
-  "function transfer(address to, uint256 amount) returns (bool)",
   "function approve(address spender, uint256 amount) returns (bool)",
+];
+
+const VAULT_ABI = [
+  "function stake(uint256 amount)",
+  "function unstake(uint256 amount)",
+  "function stakedAmount(address) view returns (uint256)",
 ];
 
 function getInjected(): Eip1193Provider | null {
@@ -27,11 +32,27 @@ function getInjected(): Eip1193Provider | null {
 export default function StakePanel({ apr }: { apr: string }) {
   const [amount, setAmount] = useState("");
   const [balance, setBalance] = useState<string | null>(null);
+  const [staked, setStaked] = useState<string | null>(null);
+  const [account, setAccount] = useState<string | null>(null);
   const [decimals, setDecimals] = useState(18);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [showReward, setShowReward] = useState(false);
 
-  const loadBalance = useCallback(async () => {
+  const aprNum = parseFloat(String(apr).replace(/[^0-9.]/g, "")) || 0;
+  const stakedNum = staked !== null ? parseFloat(staked) : 0;
+  const dailyReward = (stakedNum * (aprNum / 100)) / 365;
+  const yearlyReward = stakedNum * (aprNum / 100);
+
+  const fmt = (n: number) => {
+    if (!isFinite(n) || n <= 0) return "0.00";
+    if (n >= 1_000_000)
+      return n.toLocaleString("en-US", { maximumFractionDigits: 0 });
+    if (n >= 1) return n.toLocaleString("en-US", { maximumFractionDigits: 2 });
+    return Number(n.toFixed(6)).toString();
+  };
+
+  const loadData = useCallback(async () => {
     const p = getInjected();
     if (!p) return;
     try {
@@ -40,28 +61,49 @@ export default function StakePanel({ apr }: { apr: string }) {
         method: "eth_accounts",
       })) as string[];
       if (!accounts.length) return;
+      setAccount(accounts[0]);
       const token = new Contract(CONTRACT, ERC20_ABI, provider);
       const dec = await token.decimals();
       const bal = await token.balanceOf(accounts[0]);
       setDecimals(Number(dec));
       setBalance(formatUnits(bal, dec));
+      if (VAULT_CONTRACT) {
+        const vault = new Contract(VAULT_CONTRACT, VAULT_ABI, provider);
+        try {
+          const st = await vault.stakedAmount(accounts[0]);
+          setStaked(formatUnits(st, dec));
+        } catch {
+          setStaked(null);
+        }
+      } else {
+        setStaked(null);
+      }
     } catch {
       /* ignore */
     }
   }, []);
 
   useEffect(() => {
-    loadBalance();
+    loadData();
     const p = getInjected();
+    if (!p) return;
     const ep = p as unknown as { on?: (e: string, cb: () => void) => void };
-    ep.on?.("accountsChanged", loadBalance);
+    ep.on?.("accountsChanged", loadData);
     return () => {
       const ep2 = p as unknown as {
         removeListener?: (e: string, cb: () => void) => void;
       };
-      ep2.removeListener?.("accountsChanged", loadBalance);
+      ep2.removeListener?.("accountsChanged", loadData);
     };
-  }, [loadBalance]);
+  }, [loadData]);
+
+  const requireVault = (): string | null => {
+    if (!VAULT_CONTRACT) {
+      setStatus("Staking contract not deployed yet.");
+      return null;
+    }
+    return VAULT_CONTRACT;
+  };
 
   const stake = async () => {
     const p = getInjected();
@@ -69,6 +111,8 @@ export default function StakePanel({ apr }: { apr: string }) {
       setStatus("Connect your wallet first.");
       return;
     }
+    const vaultAddr = requireVault();
+    if (!vaultAddr) return;
     if (!amount || parseFloat(amount) <= 0) {
       setStatus("Enter a valid amount.");
       return;
@@ -79,20 +123,55 @@ export default function StakePanel({ apr }: { apr: string }) {
       const provider = new BrowserProvider(p);
       const signer = await provider.getSigner();
       const token = new Contract(CONTRACT, ERC20_ABI, signer);
+      const vault = new Contract(vaultAddr, VAULT_ABI, signer);
       const amt = parseUnits(amount, decimals);
-      // transfer langsung ke wallet tujuan (stake = kirim token)
-      const tx = await token.transfer(RECIPIENT_WALLET, amt);
-      setStatus("Waiting for confirmation...");
+      setStatus("Approving tokens...");
+      const appr = await token.approve(vaultAddr, amt);
+      await appr.wait();
+      setStatus("Staking...");
+      const tx = await vault.stake(amt);
       await tx.wait();
       setStatus("Stake successful!");
       setAmount("");
-      await loadBalance();
+      await loadData();
     } catch (e) {
       console.error(e);
       const msg = (e as Error).message;
-      // Potong jadi singkat supaya tidak keluar card; simpan detail di console
-      const shortMsg = msg.length > 120 ? msg.slice(0, 120) + "..." : msg;
-      setStatus("Failed: " + shortMsg);
+      setStatus("Failed: " + (msg.length > 120 ? msg.slice(0, 120) + "..." : msg));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const unstake = async () => {
+    const p = getInjected();
+    if (!p) {
+      setStatus("Connect your wallet first.");
+      return;
+    }
+    const vaultAddr = requireVault();
+    if (!vaultAddr) return;
+    if (!amount || parseFloat(amount) <= 0) {
+      setStatus("Enter a valid amount.");
+      return;
+    }
+    setBusy(true);
+    setStatus(null);
+    try {
+      const provider = new BrowserProvider(p);
+      const signer = await provider.getSigner();
+      const vault = new Contract(vaultAddr, VAULT_ABI, signer);
+      const amt = parseUnits(amount, decimals);
+      setStatus("Unstaking...");
+      const tx = await vault.unstake(amt);
+      await tx.wait();
+      setStatus("Unstake successful!");
+      setAmount("");
+      await loadData();
+    } catch (e) {
+      console.error(e);
+      const msg = (e as Error).message;
+      setStatus("Failed: " + (msg.length > 120 ? msg.slice(0, 120) + "..." : msg));
     } finally {
       setBusy(false);
     }
@@ -105,6 +184,14 @@ export default function StakePanel({ apr }: { apr: string }) {
         <span className="px-heading text-white/80 text-[11px]">Your STONKS</span>
         <span className="px-heading text-[#3ddad8] text-[11px]">
           {balance !== null ? `${balance} STONKS` : "—"}
+        </span>
+      </div>
+
+      {/* staked bar */}
+      <div className="flex items-center justify-between mb-4">
+        <span className="px-heading text-white/80 text-[11px]">Staked in vault</span>
+        <span className="px-heading text-[#ffbe39] text-[11px]">
+          {staked !== null ? `${staked} STONKS` : "—"}
         </span>
       </div>
 
@@ -150,17 +237,18 @@ export default function StakePanel({ apr }: { apr: string }) {
         </button>
         <button
           type="button"
-          onClick={() => {}}
-          className="px-btn bg-[#f06943] text-white px-4 py-3 text-[12px] flex items-center justify-center gap-2"
+          onClick={unstake}
+          disabled={busy}
+          className="px-btn bg-[#f06943] text-white px-4 py-3 text-[12px] flex items-center justify-center gap-2 disabled:opacity-50"
         >
           <ArrowDownCircle className="h-4 w-4" /> UNSTAKE
         </button>
         <button
           type="button"
-          onClick={() => {}}
+          onClick={() => setShowReward(true)}
           className="px-btn bg-[#ffbe39] text-[#20102e] px-4 py-3 text-[12px] flex items-center justify-center gap-2"
         >
-          <Coins className="h-4 w-4" /> CLAIM
+          <Gift className="h-4 w-4" /> REWARDS
         </button>
       </div>
 
@@ -171,8 +259,73 @@ export default function StakePanel({ apr }: { apr: string }) {
       )}
 
       <p className="text-[#c9b8d8] text-center text-sm mt-6">
-        Deposit your STONKS to start earning rewards instantly.
+        Deposit your STONKS into the vault to start earning. Rewards are
+        distributed manually by the team every period.
       </p>
+
+      {/* ---- REWARD CARD MODAL ---- */}
+      {showReward && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4"
+          onClick={() => setShowReward(false)}
+        >
+          <div
+            className="px-card bg-[#2b0d3e] border-4 border-black w-full max-w-md p-6 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowReward(false)}
+              className="absolute top-3 right-3 text-white/60 hover:text-white"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center gap-2 mb-4">
+              <Gift className="h-5 w-5 text-[#ffbe39]" />
+              <h3 className="px-heading text-white text-[14px]">REWARDS</h3>
+            </div>
+
+            {/* estimated earnings */}
+            <div className="px-border bg-[#3c1154] p-5 text-center mb-4">
+              <div className="px-heading text-white/70 text-[10px] mb-2">
+                EST. DAILY REWARD
+              </div>
+              <div className="px-heading text-[#3ddad8] text-2xl break-all leading-tight">
+                {fmt(dailyReward)} STONKS
+              </div>
+              <div className="text-[#c9b8d8] text-sm mt-2 break-all">
+                {fmt(yearlyReward)} STONKS / year at {apr} APR
+              </div>
+            </div>
+
+            {/* stake summary */}
+            <div className="flex items-center justify-between text-sm mb-4">
+              <span className="px-heading text-white/70 text-[10px]">
+                YOUR STAKE
+              </span>
+              <span className="px-heading text-[#ffbe39] text-[11px] break-all max-w-[60%] text-right">
+                {staked !== null ? `${fmt(stakedNum)} STONKS` : "—"}
+              </span>
+            </div>
+
+            {/* claim */}
+            <button
+              type="button"
+              onClick={() => setShowReward(false)}
+              className="px-btn bg-[#3ddad8] text-[#20102e] px-4 py-3 text-[12px] w-full flex items-center justify-center gap-2"
+            >
+              <Gift className="h-4 w-4" /> CLAIM
+            </button>
+
+            <p className="text-[#c9b8d8] text-center text-sm mt-4">
+              Rewards are paid manually by the team. Hit CLAIM and ping us in
+              Telegram with your wallet — payout lands shortly.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
