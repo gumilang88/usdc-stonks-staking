@@ -320,11 +320,6 @@ export default function StakePanel({ apr }: { apr: string }) {
             >
               <Gift className="h-4 w-4" /> CLAIM
             </button>
-
-            <p className="text-[#c9b8d8] text-center text-sm mt-4">
-              Rewards are paid manually by the team. Hit CLAIM and ping us in
-              Telegram with your wallet — payout lands shortly.
-            </p>
           </div>
         </div>
       )}
