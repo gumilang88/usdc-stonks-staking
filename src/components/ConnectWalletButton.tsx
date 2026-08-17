@@ -10,7 +10,7 @@ type EthereumProvider = Eip1193Provider & {
 
 function getProvider(): EthereumProvider | null {
   if (typeof window === "undefined") return null;
-  // MetaMask / Rabby / wallet ter-inject sebagai window.ethereum
+  // MetaMask / Rabby / wallet injected as window.ethereum
   const w = window as unknown as { ethereum?: EthereumProvider };
   return w.ethereum ?? null;
 }
@@ -48,7 +48,7 @@ export default function ConnectWalletButton() {
     const onChain = () => syncState();
     try {
       p.request({ method: "eth_accounts" });
-      // ethereum menyediakan event; cast longgar buat lint
+      // ethereum exposes events; loose cast for lint
       const ep = p as unknown as {
         on?: (e: string, cb: () => void) => void;
         removeListener?: (e: string, cb: () => void) => void;
@@ -68,19 +68,19 @@ export default function ConnectWalletButton() {
     const p = getProvider();
     if (!p) {
       alert(
-        "Wallet tidak terdeteksi. Install MetaMask atau Rabby dulu, lalu refresh."
+        "No wallet detected. Please install MetaMask or Rabby, then refresh."
       );
       return;
     }
     setConnecting(true);
     try {
-      // minta akun
+      // request accounts
       const accounts = (await p.request({
         method: "eth_requestAccounts",
       })) as string[];
       setAccount(accounts[0] ?? null);
 
-      // pastikan chain ARC (5042). kalau belum, switch; kalau belum ada, add.
+      // ensure ARC chain (5042). if not, switch; if missing, add.
       try {
         await p.request({
           method: "wallet_switchEthereumChain",
@@ -108,7 +108,7 @@ export default function ConnectWalletButton() {
       setChainOk(true);
     } catch (err) {
       console.error(err);
-      alert("Gagal connect wallet: " + (err as Error).message);
+      alert("Failed to connect wallet: " + (err as Error).message);
     } finally {
       setConnecting(false);
     }

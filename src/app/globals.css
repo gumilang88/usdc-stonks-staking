@@ -70,7 +70,7 @@
   }
 }
 
-/* ---------- PIXEL DESIGN SYSTEM (rapi: semua tepi dikunci 4px, radius 0) ---------- */
+/* ---------- PIXEL DESIGN SYSTEM (crisp: all edges locked to 4px, radius 0) ---------- */
 img {
   image-rendering: pixelated;
   image-rendering: crisp-edges;

@@ -14,7 +14,7 @@ import StakePanel from "@/components/StakePanel";
 const TG = "https://t.me/usdcstonkss";
 const X = "https://x.com/usdc_stonks";
 
-// TODO: ganti dengan nilai asli setelah kontrak staking di-deploy
+// TODO: replace with real value once the staking contract is deployed
 const STAKE = {
   apr: "620%",
   totalStaked: "28,000,000",

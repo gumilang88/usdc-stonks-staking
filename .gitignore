@@ -50,3 +50,4 @@ temp/
 
 # Preview screenshots
 *_preview.png
+__pycache__/
