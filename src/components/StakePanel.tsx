@@ -261,8 +261,7 @@ export default function StakePanel({ apr }: { apr: string }) {
       )}
 
       <p className="text-[#c9b8d8] text-center text-sm mt-6">
-        Deposit your STONKS into the vault to start earning. Rewards are
-        distributed manually by the team every period.
+        Deposit your STONKS into the vault to start earning rewards.
       </p>
 
       {/* ---- REWARD CARD MODAL ---- */}
