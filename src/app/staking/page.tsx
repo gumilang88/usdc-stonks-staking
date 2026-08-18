@@ -17,7 +17,7 @@ const X = "https://x.com/usdc_stonks";
 // TODO: replace with real value once the staking contract is deployed
 const STAKE = {
   apr: "620%",
-  totalStaked: "56,717,931",
+  totalStaked: "72,210,590",
   totalValueLocked: "$STK 420M",
   rewardToken: "STONKS",
   lockPeriod: "Flexible",
