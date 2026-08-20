@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   title: "USDC STONKS",
   description:
     "USDC STONKS — The First AI Meme Token on ARC. Official meme token, one of ARC's most trusted.",
+  icons: {
+    icon: "/images/px/rocket_favicon.png",
+  },
 };
 
 export default function RootLayout({
