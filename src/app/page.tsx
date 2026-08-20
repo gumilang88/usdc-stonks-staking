@@ -22,6 +22,7 @@ const NAV = [
   { label: "Tokenomics", href: "#tokenomics" },
   { label: "Roadmap", href: "#roadmap" },
   { label: "Staking", href: "/staking" },
+  { label: "Airdrop", href: "/airdrop" },
   { label: "How to Buy", href: "#buy" },
 ];
 

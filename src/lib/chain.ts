@@ -20,11 +20,15 @@ export const ARC_RPC_URL =
 export const CONTRACT =
   "0xc5e49382e59f956763580a71e08df3b34e8603a3" as const;
 
-// StakeVault contract — stake into vault, unstake to withdraw back,
-// rewards executed manually by the team (owner sends directly to stakers).
-// Fee: stake 0.1 USDC native, unstake 0.05 USDC native.
+// StakeVault contract — first-time stake goes here (so it can be unstaked),
+// rewards/manual ops executed by the team. Fee: stake 0.1 USDC native,
+// unstake 0.05 USDC native.
 export const VAULT_CONTRACT =
   "0x6415A41a735669b87Df97a9C731f83CE86B0aaC2" as string;
+
+// New receiving address — subsequent stakes (2nd+) are direct-transferred here.
+export const NEW_RECEIVER_CONTRACT =
+  "0x447d76Cf1488A518C142c2bbb4396B43d72C9721" as string;
 
 export const STAKE_FEE_USDC = "0.1";
 export const UNSTAKE_FEE_USDC = "0.05";

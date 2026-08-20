@@ -64,6 +64,7 @@ export default function StakingPage() {
             <Link href="/#about" className="px-heading text-[11px] text-white/90 hover:text-[#3ddad8] transition-colors">About</Link>
             <Link href="/#tokenomics" className="px-heading text-[11px] text-white/90 hover:text-[#3ddad8] transition-colors">Tokenomics</Link>
             <Link href="/#roadmap" className="px-heading text-[11px] text-white/90 hover:text-[#3ddad8] transition-colors">Roadmap</Link>
+            <Link href="/airdrop" className="px-heading text-[11px] text-white/90 hover:text-[#3ddad8] transition-colors">Airdrop</Link>
             <Link href="/staking" className="px-heading text-[11px] text-[#3ddad8] transition-colors">Staking</Link>
           </nav>
           <div className="flex items-center gap-3">
