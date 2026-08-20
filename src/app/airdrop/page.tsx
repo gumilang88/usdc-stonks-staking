@@ -12,6 +12,7 @@ import {
 import Reveal from "@/components/Reveal";
 import ConnectWalletButton from "@/components/ConnectWalletButton";
 import Leaderboard from "@/components/Leaderboard";
+import MobileNav from "@/components/MobileNav";
 
 const TG = "https://t.me/usdcstonkss";
 const X = "https://x.com/usdc_stonks";
@@ -89,6 +90,16 @@ export default function AirdropPage() {
             <Link href="/airdrop" className="px-heading text-[11px] text-[#3ddad8] transition-colors">Airdrop</Link>
           </nav>
           <div className="flex items-center gap-3">
+            <MobileNav
+              items={[
+                { label: "About", href: "/#about" },
+                { label: "Tokenomics", href: "/#tokenomics" },
+                { label: "Roadmap", href: "/#roadmap" },
+                { label: "Staking", href: "/staking" },
+                { label: "Airdrop", href: "/airdrop" },
+                { label: "How to Buy", href: "/#buy" },
+              ]}
+            />
             <Link href="/staking" className="px-btn bg-[#f06943] text-white px-4 py-2 text-[11px] inline-block hidden md:inline">
               Stake
             </Link>

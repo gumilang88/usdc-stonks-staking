@@ -10,6 +10,7 @@ import {
 import Reveal from "@/components/Reveal";
 import ConnectWalletButton from "@/components/ConnectWalletButton";
 import StakePanel from "@/components/StakePanel";
+import MobileNav from "@/components/MobileNav";
 
 const TG = "https://t.me/usdcstonkss";
 const X = "https://x.com/usdc_stonks";
@@ -68,6 +69,16 @@ export default function StakingPage() {
             <Link href="/staking" className="px-heading text-[11px] text-[#3ddad8] transition-colors">Staking</Link>
           </nav>
           <div className="flex items-center gap-3">
+            <MobileNav
+              items={[
+                { label: "About", href: "/#about" },
+                { label: "Tokenomics", href: "/#tokenomics" },
+                { label: "Roadmap", href: "/#roadmap" },
+                { label: "Staking", href: "/staking" },
+                { label: "Airdrop", href: "/airdrop" },
+                { label: "How to Buy", href: "/#buy" },
+              ]}
+            />
             <Link href="/#buy" className="px-btn bg-[#f06943] text-white px-4 py-2 text-[11px] inline-block hidden md:inline">
               Join
             </Link>

@@ -11,6 +11,7 @@ import {
 import CopyButton from "@/components/CopyButton";
 import Reveal from "@/components/Reveal";
 import RoadmapTabs from "@/components/RoadmapTabs";
+import MobileNav from "@/components/MobileNav";
 
 const CONTRACT = "0xc5e49382e59f956763580a71e08df3b34e8603a3";
 const JUP = "https://radardex.pro/#" + CONTRACT;
@@ -94,6 +95,12 @@ export default function Home() {
             ))}
           </nav>
           <div className="flex items-center gap-3">
+            <MobileNav
+              items={[
+                ...NAV,
+                { label: "Airdrop", href: "/airdrop" },
+              ]}
+            />
             <a href="#buy" className="hidden md:inline">
               <span className="px-btn bg-[#f06943] text-white px-4 py-2 text-[11px] inline-block">
                 Join
