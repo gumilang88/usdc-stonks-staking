@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import ConnectWalletButton from "@/components/ConnectWalletButton";
+import Leaderboard from "@/components/Leaderboard";
 
 const TG = "https://t.me/usdcstonkss";
 const X = "https://x.com/usdc_stonks";
@@ -198,6 +199,25 @@ export default function AirdropPage() {
               </Reveal>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ---- LEADERBOARD ---- */}
+      <section className="bg-[#3c1154] border-b-4 border-black px-grid-bg">
+        <div className="mx-auto max-w-3xl px-4 py-16 md:py-20">
+          <div className="text-center mb-10">
+            <span className="px-chip bg-[#ffbe39] text-[#20102e] px-4 py-2 text-[11px]">Rank</span>
+            <h2 className="px-heading text-white text-3xl md:text-5xl mt-4 text-outline">
+              STAKER&nbsp;LEADERBOARD
+            </h2>
+            <p className="text-[#c9b8d8] text-lg mt-4 mx-auto max-w-xl">
+              Top stakers by staked position. Climb the ranks — the bigger your stake, the bigger your airdrop cut.
+            </p>
+          </div>
+
+          <Reveal>
+            <Leaderboard />
+          </Reveal>
         </div>
       </section>
 
